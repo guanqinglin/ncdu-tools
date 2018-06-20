@@ -17,18 +17,18 @@ def testncdu():
     if ret_status[0] != 0:
         systemversion = platform.system()
         if systemversion == 'Linux':
-            print("检测到本机[%s]系统没有安装ncdu工具，请安装ncdu工具"%systemversion)
-            print("CentOS安装命令：yum -y install ncdu")
-            print("Ubuntu安装命令：apt-get install ncdu")
-            print("其他Linux版本，请参考网站：https://dev.yorhel.nl/ncdu")
+            print("Test [%s] system no found  install ncdu command，Please install ncdu tools."%systemversion)
+            print("CentOS install Command：yum -y install ncdu")
+            print("Ubuntu nstall Command：apt-get install ncdu")
+            print("Other Linux Version，Plase fyi：https://dev.yorhel.nl/ncdu")
         elif  systemversion == 'Darwin':
-            print("检测到本机[%s]系统没有安装ncdu工具，请安装ncdu工具" % systemversion)
-            print("MacOS安装命令：brew install ncdu")
-            print("关于brew的安装，请参考网站：https://formulae.brew.sh/formula/ncdu")
+            print("Test [%s] system no found  install ncdu command，Please install ncdu tools." % systemversion)
+            print("MacOS install Command：brew install ncdu")
+            print("about  brew，Plase fyi：https://formulae.brew.sh/formula/ncdu")
         elif systemversion == 'Windows':
-            print("本工具暂不支持windows系列操作系统")
+            print("Ncdu-tools nonsupport Windows.")
         else:
-            print("未检测到您系统版本，请联系管理员，邮箱：qinglin@qinglin.net")
+            print("Test system fail，Please contact the administrator ，Email：qinglin@qinglin.net")
         sys.exit(ret_status[0] )
 
 
@@ -39,17 +39,17 @@ def readFile():
             file.close()
         return fileRead
     except Exception as e:
-        print("获取路径信息失败，请重试：",e)
+        print("Get Path fail，Please Try：",e)
 
 
-def display(data, parentPath,size):
+def display(data, parentpath,size=None):
     for i in data:
         if isinstance(i,list):
-            display(i, os.path.join(parentPath, i[0]["name"]),size)
+            display(i, os.path.join(parentpath, i[0]["name"]),size)
             continue
-        if "dsize" in i:
+        if "dsize" in i and size:
             if i["dsize"] > size * 1024 * 1024:
-                print(os.path.join(parentPath,i["name"]))
+                print(os.path.join(parentpath,i["name"]))
 
 
 def execute(path):
@@ -58,17 +58,21 @@ def execute(path):
 
 
 def main(argv):
-    help = '''python ncdu-tools.py  <options>  <directory>
+    help = '''python ncdu-tools.py  <-d>  <directory>  <options>  <value>
     
- -h                       This help message
- -v                       Print version
- -d                       Specify the path,Print >1MB file.
- -m                      Print input > MB
+ -h         This help message
+ -v         Print version
+ -d         Specify the directory
+ -m         Print input > MB
+ -g         Prin input >GB
 '''
+    path = ""
+    msize = ""
+    gsize = ""
     if len(argv)  == 0:
         print(help)
     try:
-        opts, args = getopt.getopt(argv, "vhd:m:")
+        opts, args = getopt.getopt(argv, "vht:d:m:g:")
     except getopt.GetoptError:
         print(help)
         sys.exit(2)
@@ -82,15 +86,22 @@ def main(argv):
             path = arg
         elif opt in ("-m", "--m"):
             msize = arg
+        elif opt in ("-g", "--g"):
+            gsize = arg
+
     if path and msize:
         execute(path)
         data = json.loads(readFile())
-        print("大于%sM文件："%msize)
-        display(data[-1], data[-1][0]["name"],int(msize))
-    else:
-        print("参数不完整")
+        print("File > %s MB："%msize)
+        display(data[-1], data[-1][0]["name"], int(msize))
+    elif path and gsize:
+        execute(path)
+        data = json.loads(readFile())
+        gcount = int(gsize)*1024
+        print("File > %s GB：" % gsize)
+        display(data[-1], data[-1][0]["name"], gcount)
+
 
 if __name__ == '__main__':
     testncdu()
     main(sys.argv[1:])
-
